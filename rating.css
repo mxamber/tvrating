@@ -1,0 +1,99 @@
+.rating span {
+	font-size: 25px;
+	font-weight: bold;
+	cursor: pointer;
+	user-select: none;
+}
+
+.rating span:hover {
+	text-shadow: 0px 0px 12px brown;
+	color: gold;
+}
+
+.rating[data-rating="5"] span:nth-child(-1n+5) {
+	color: gold;
+}
+.rating[data-rating="4"] span:nth-child(-1n+4) {
+	color: gold;
+}
+.rating[data-rating="3"] span:nth-child(-1n+3) {
+	color: gold;
+}
+.rating[data-rating="2"] span:nth-child(-1n+2) {
+	color: gold;
+}
+.rating[data-rating="1"] span:nth-child(-1n+1) {
+	color: gold;
+}
+.rating[data-rating="0"] * {
+	color: darkgray;
+}
+
+
+
+
+input[type="number"] {
+	max-width: 3em;
+	border: none;
+	background: #F0F0F0;
+	text-align: center;	
+}
+input[type="checkbox"] {
+	height: 16px;
+	vertical-align: center;
+}
+label {
+	user-select: none;
+}
+
+input:not(h1 input) {
+	height: 1.5em;
+	font-size: 16px;
+}
+
+h1, h1 input {
+	font-size: 25px;
+	font-family: sans, sans-serif;
+	font-weight: normal;
+}
+h1 input {
+	border: none;
+	border-bottom: 1px dotted black;
+}
+h1 input:focus {
+	border: none;
+	border-bottom: 1px dotted orange;
+	background: #FAFAFA;
+	outline: none;
+}
+#short {
+	max-width: 3.5em;
+}
+
+button {
+	border-radius: 0;
+	border: 1px solid black;
+	padding: 0.5em;
+	box-sizing: border-box;
+}
+button:active {
+	border: 1px solid gray;
+	box-shadow: 0px 0px 4px gray;
+}
+
+
+
+
+.seasonHeader {
+	cursor: pointer;
+	text-decoration: underline;
+}
+.seasonList li {
+	cursor: pointer;
+	width: fit-content;
+}
+.seasonList li .sup {
+	vertical-align: super;
+	font-size: small;
+	color: gold;
+}

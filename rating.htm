@@ -1,0 +1,43 @@
+<!doctype HTML>
+<html>
+<head>
+	<title>TV Show Episode Ranking</title>
+	<meta name="author" content="mxamber">
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="rating.css">
+</head>
+<body onload="init()">
+	<h1>Episode Ratings: <input id="showname" type="text" placeholder="Show Name Here" title="Show Name"></input> (<input id="short" type="text" placeholder="SHORT" title="Show abbreviation"></input>)</h1>
+	
+	<button id="download">Save</button>
+	<button id="load">Load</button>
+	<input id="file" type="file" accept=".json,application/json" style="display: none;"></input>
+	
+	<p>Episode:&ensp;
+	<input id="season" type="number" min=1 value=1 title="Season"></input>&ensp;x&ensp;
+	<input id="episode" type="number" min=1 value=1 title="Episode"></input>&emsp;
+	<input id="title" type="text" placeholder="Title" title="Title"></input>&nbsp;
+	<input id="double" type="checkbox" value=false title="Double episode?"><label for="double"> Double episode</label></input>
+	</p>
+	
+	<textarea id="notes" cols=50 rows=5 style="display:block" placeholder="Notes..." title="Notes"></textarea>
+	
+	<p id="ratings"></p>
+	
+	<button id="submit">Submit</button>
+	
+	<nav id="toc"></nav>
+	
+	<script src="rating.js"></script>
+	
+	<!--
+	<span class="rating" data-rating="0">
+		<span onclick="this.parentNode.setAttribute('data-rating', 1);">&#9733;</span>
+		<span onclick="this.parentNode.setAttribute('data-rating', 2);">&#9733;</span>
+		<span onclick="this.parentNode.setAttribute('data-rating', 3);">&#9733;</span>
+		<span onclick="this.parentNode.setAttribute('data-rating', 4);">&#9733;</span>
+		<span onclick="this.parentNode.setAttribute('data-rating', 5);">&#9733;</span>
+	</span>
+	-->
+</body>
+</html>
