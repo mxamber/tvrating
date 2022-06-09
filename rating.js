@@ -39,6 +39,7 @@ var elemDouble =$("#double");
 var elemNotes = $("#notes");
 var elemRatings = $("#ratings");
 var elemSubmit = $("#submit");
+var elemDelete = $("#delete");
 var elemToc = $("#toc");
 
 // Class: Show
@@ -95,9 +96,32 @@ function isEpisode(episode) {
 	return false;
 }
 
+// does an episode exist?
+function exists(show, season, episode) {
+	if(
+		show == (null || undefined || "") ||
+		show.Seasons[season] == (null || undefined || "") ||
+		show.Seasons[season].Episodes == (null || undefined || "") ||
+		show.Seasons[season].Episodes[episode] == (null || undefined || "")
+		) {
+		return false;
+	}
+	return true;
+}
+
 // returns a HTML element representing an input control to submit a 1 to 5 star rating
 // parameters: label (inserted before control), id, tooltip (can be blank)
-function rateButton(label, id, tooltip="") {
+function rateButton(
+	// parameters
+	label,
+	id,
+	tooltip = "",
+	descriptor1 = "It's abysmal",
+	descriptor2 = "It's meh",
+	descriptor3 = "It's okay",
+	descriptor4 = "It's good",
+	descriptor5 = "It's great"
+) {
 	let outer = document.createElement("span");
 	outer.setAttribute("class", "rating");
 	outer.setAttribute("id", id);
@@ -109,26 +133,46 @@ function rateButton(label, id, tooltip="") {
 	
 	inner = document.createElement("span");
 	inner.setAttribute("onclick", "this.parentNode.setAttribute(\"data-rating\", 1);");
+	inner.setAttribute("title", descriptor1);
 	inner.innerHTML = "&#9733;"; // five-pointed star symbol (decimal unicode value)
 	outer.appendChild(inner);
 	
 	inner = inner.cloneNode(true);
 	inner.setAttribute("onclick", "this.parentNode.setAttribute(\"data-rating\", 2);");
+	inner.setAttribute("title", descriptor2);
 	outer.appendChild(inner);
 	inner = inner.cloneNode(true);
 	inner.setAttribute("onclick", "this.parentNode.setAttribute(\"data-rating\", 3);");
+	inner.setAttribute("title", descriptor3);
 	outer.appendChild(inner);
 	inner = inner.cloneNode(true);
 	inner.setAttribute("onclick", "this.parentNode.setAttribute(\"data-rating\", 4);");
+	inner.setAttribute("title", descriptor4);
 	outer.appendChild(inner);
 	inner = inner.cloneNode(true);
 	inner.setAttribute("onclick", "this.parentNode.setAttribute(\"data-rating\", 5);");
+	inner.setAttribute("title", descriptor5);
 	outer.appendChild(inner);
 	
 	outer.innerHTML += "<br/>";
 	
 	return outer;
 }
+
+
+function rateString(average) {
+	let ratingHtml = "<span title=\"" + average + "\" class=\"sup rating average\">";
+	for(let i = 0; i < Math.floor(average); i++) { ratingHtml += "\u2605"; }
+	if(average % 1 > 0.25 && average % 1 < 0.75) {
+		ratingHtml += "\u00BD";
+	} else if(average % 1 >= 0.75) {
+		ratingHtml += "\u2605";
+	}
+	ratingHtml += "</span>";
+	
+	return ratingHtml;
+}
+
 
 // function to wipe all inputs and recreate the rating inputs
 function renew() {
@@ -137,15 +181,87 @@ function renew() {
 	elemNotes.value = "";
 	
 	elemRatings.innerHTML = "";
-	elemRatings.appendChild(rateButton("Plausibility", "rate_plausible", "Is the plot plausible? Is there too much ex machina?\nDoes it only work because of handwaving?"));
-	elemRatings.appendChild(rateButton("Emotionality", "rate_emotional", "Does the episode make you laugh or cry?\nDoes it evoke emotions (besides boredom) at all?"));
-	elemRatings.appendChild(rateButton("Originality", "rate_original", "Is the plot original? Full of overused tropes?\nCopying (not parodying!) something?"));
-	elemRatings.appendChild(rateButton("Continuity", "rate_continuity", "Does the episode enhance existing continuity?\nDoes it contradict/ignore earlier events?"));
-	elemRatings.appendChild(rateButton("Characters", "rate_characters", "Does the episode advance the characters' arcs?\nIs a character OOC? Badly written?"));
+	
+	elemRatings.appendChild(rateButton(
+		"Plausibility",
+		"rate_plausible",
+		"Is the plot plausible? Is there too much ex machina?\nDoes it only work because of handwaving?",
+		"It's absurd",
+		"There's plot holes",
+		"It's fine",
+		"It's realistic",
+		"Immaculate reality"
+	));
+	
+	elemRatings.appendChild(rateButton(
+		"Emotionality",
+		"rate_emotional",
+		"Does the episode make you laugh or cry?\nDoes it evoke emotions (besides boredom) at all?",
+		"I hate it",
+		"I don't like it",
+		"It's alright",
+		"It's moving",
+		"I love it"
+	));
+	
+	elemRatings.appendChild(rateButton(
+		"Originality",
+		"rate_original",
+		"Is the plot original? Full of overused tropes?\nCopying (not parodying!) something?",
+		"This is plagiarism",
+		"Seen it before",
+		"It's unremarkable",
+		"It's a new approach",
+		"It's groundbreaking"
+	));
+	
+	elemRatings.appendChild(rateButton(
+		"Continuity",
+		"rate_continuity",
+		"Does the episode enhance existing continuity?\nDoes it contradict/ignore earlier events?",
+		"It's one giant plot hole",
+		"There's some contradictions",
+		"No additions, no contradictions",
+		"Enhances continuity",
+		"Huge additions to lore"
+	));
+	
+	elemRatings.appendChild(rateButton(
+		"Characters",
+		"rate_characters",
+		"Does the episode advance the characters' arcs?\nIs a character OOC? Badly written?",
+		"Characters are grossly OOC",
+		"Characters are acting weird",
+		"It's unremarkable",
+		"Characters receive special attention\nThere is notable character development",
+		"Characters are developed a lot"
+	));
+}
+
+function deleteEpisode() {
+	let season = elemSeason.valueAsNumber;
+	let number = elemEpisode.valueAsNumber;
+	let title = elemTitle.value.trim();
+	
+	if(!exists(show, season - 1, number - 1)) {
+		alert("No episode found! Can't delete what isn't there.");
+		return;
+	}
+	
+	if(!confirm(`Do you really want to delete ${season}x${number} "${title}"?`)) {
+		return;
+	}
+	
+	if(exists(show, season - 1, number - 2) && show.Seasons[season-1].Episodes[number-2].double) {
+		show.Seasons[season-1].Episodes[number-2].double = false;
+	}
+	
+	show.Seasons[season-1].Episodes[number-1] = null;
+	updateShow();
 }
 
 // save the current entry as an episode in show.Seasons.Episodes
-function submit() {
+function submitEpisode() {
 	let title = elemTitle.value.trim();
 	let number = elemEpisode.valueAsNumber;
 	let season = elemSeason.valueAsNumber;
@@ -164,12 +280,23 @@ function submit() {
 	if(!show.Seasons[season-1]) {
 		show.Seasons[season-1] = new Season();
 	}
-	show.Seasons[season-1].Episodes[number-1] = episode;
+	
+	if(show.Seasons[season-1].Episodes[number-1] != null || show.Seasons[season-1].Episodes[number-1] != undefined) {
+		if(!confirm("Episode already exists! Overwrite?")) {
+			return;
+		}
+	}
 	// two-part episode? meaning, episode that has two numbers (TNG 01x01/02)
 	// create a PLACEHOLDER in the following number (01 is the episode, 02 is a placeholder)
 	if(double) {
+		if(show.Seasons[season-1].Episodes[number] != null || show.Seasons[season-1].Episodes[number] != undefined) {
+			if(!confirm("Next episode already exists! Overwrite?")) {
+				return;
+			}
+		}
 		show.Seasons[season-1].Episodes[number] = "PLACEHOLDER";
 	}
+	show.Seasons[season-1].Episodes[number-1] = episode;
 	
 	// refresh form: reset all inputs
 	renew();
@@ -193,6 +320,8 @@ function submit() {
 */
 function init() {
 	renew();
+	elemToc.style.display = "none";
+	
 	elemID.addEventListener("change", function(){
 		show.ID = elemID.value.trim();
 	});
@@ -204,7 +333,16 @@ function init() {
 	elemEpisode.addEventListener("change", updateShow);
 	elemSave.addEventListener("click", exportShow);
 	elemLoad.addEventListener("click", function() { elemFile.click(); });
-	elemSubmit.addEventListener("click", submit);
+	elemSubmit.addEventListener("click", submitEpisode);
+	elemDelete.addEventListener("click", deleteEpisode);
+
+	// add event listener for pressing enter in the episode title input	
+	elemTitle.addEventListener("keyup", function(event) {
+		if(event.keyCode == 13) {
+			submitEpisode();
+			event.preventDefault();
+		}
+	});
 }
 
 function exportShow() {
@@ -281,12 +419,18 @@ function importShow() {
 
 function updateShow() {
 	if(show.Seasons.length < 1) {
+		elemToc.style.display = "none";
 		return;
 	}
 	
 	// create clickable table of contents
 	elemToc.innerHTML = "";
+	elemToc.style.display = "";
 	for(let s = 0; s < show.Seasons.length; s++) {
+		let seasonRating = 0;
+		let episodesRated = 0;
+		let p = document.createElement("p");
+	
 		let h = document.createElement("h3");
 		h.classList.add("seasonHeader");
 		h.id = "seasonHeader" + (s+1);
@@ -295,6 +439,8 @@ function updateShow() {
 		h.onclick = function() {
 			elemSeason.value = (s+1);
 			elemEpisode.value = 1;
+			window.scrollTo(0,0);
+			updateShow();
 		};
 		elemToc.appendChild(h);
 		
@@ -310,6 +456,7 @@ function updateShow() {
 			index.onclick = function() {
 				elemSeason.value = (s+1);
 				elemEpisode.value = 1;
+				window.scrollTo(0,0);
 				updateShow();
 			};
 			list.appendChild(index);
@@ -321,6 +468,8 @@ function updateShow() {
 			index.onclick = function() {
 				elemSeason.value = (s+1);
 				elemEpisode.value = (e+1);
+				window.scrollTo(0,0);
+				elemTitle.focus();
 				updateShow();
 			};
 			
@@ -341,15 +490,13 @@ function updateShow() {
 				console.log(`${episode}: ${average} / ${considered} = ${average / considered}`);
 				if(considered > 0) {
 					average = average / considered;
-					average = Math.round(average*2)/2;
+					// average = Math.round(average*2)/2;
 					if(average > 5) { average = 5; }
 					
-					let tempstr = "<span class=\"sup\">";
-					for(let i = 0; i < Math.floor(average); i++) {
-						tempstr += "\u2605";
-					}
-					if(average % 1 > 0) { tempstr += "\u00BD"; }
-					average = tempstr + "</span>";
+					seasonRating += average;
+					episodesRated++;
+					
+					average = rateString(average);
 				} else {
 					average = "";
 				}
@@ -364,6 +511,11 @@ function updateShow() {
 			}
 			list.appendChild(index);
 		}
+		
+		seasonRating = seasonRating / episodesRated;
+		seasonRating = Math.round(seasonRating * 10)/10; // round to one decimal digit
+		p.innerHTML += rateString(seasonRating);
+		h.after(p);
 	}
 	
 	// load current episode
