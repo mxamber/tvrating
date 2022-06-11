@@ -40,6 +40,7 @@ var elemNotes = $("#notes");
 var elemRatings = $("#ratings");
 var elemSubmit = $("#submit");
 var elemDelete = $("#delete");
+var elemWeighted = $("#weighted");
 var elemToc = $("#toc");
 
 // Class: Show
@@ -335,6 +336,7 @@ function init() {
 	elemLoad.addEventListener("click", function() { elemFile.click(); });
 	elemSubmit.addEventListener("click", submitEpisode);
 	elemDelete.addEventListener("click", deleteEpisode);
+	elemWeighted.addEventListener("click", updateShow);
 
 	// add event listener for pressing enter in the episode title input	
 	elemTitle.addEventListener("keyup", function(event) {
@@ -483,7 +485,15 @@ function updateShow() {
 				let average = 0;
 				let considered = 0;
 				if(episode.Plausible > 0) { average += episode.Plausible; considered++; }
-				if(episode.Emotional > 0) { average += episode.Emotional; considered++; }
+				if(episode.Emotional > 0) {
+					if(elemWeighted.checked) {
+						average += (episode.Emotional * 2);
+						considered += 2;
+					} else {
+						average += episode.Emotional;
+						considered++;
+					}
+				}
 				if(episode.Original > 0) { average += episode.Original; considered++; }
 				if(episode.Continuity > 0) { average += episode.Continuity; considered++; }
 				if(episode.Characters > 0) { average += episode.Characters; considered++; }
