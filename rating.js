@@ -15,6 +15,24 @@ function $(query) {
 	return null;
 }
 
+
+// calculate median average (as opposed to arithmetic average)
+function median(values) {
+  if(values.length == 0 || values.length == undefined) {
+    return NaN;
+  }
+  if(values.length == 1) {
+    return values[0];
+  }
+  let half = Math.floor(values.length / 2);
+  if(half % 2 && half > 2) {
+    return values[half];
+  }
+  return ((values[half] + values[half-1]) / 2);
+};
+
+
+// pad numbers with zeroes
 function fNumber(number) {
 	if(number < 10) {
 		return "0" + number;
@@ -41,6 +59,7 @@ var elemRatings = $("#ratings");
 var elemSubmit = $("#submit");
 var elemDelete = $("#delete");
 var elemWeighted = $("#weighted");
+var elemMedian = $("#median");
 var elemToc = $("#toc");
 
 // Class: Show
@@ -336,7 +355,8 @@ function init() {
 	elemLoad.addEventListener("click", function() { elemFile.click(); });
 	elemSubmit.addEventListener("click", submitEpisode);
 	elemDelete.addEventListener("click", deleteEpisode);
-	elemWeighted.addEventListener("click", updateShow);
+	elemWeighted.addEventListener("click", function(){updateShow(false)});
+	elemMedian.addEventListener("click", function(){updateShow(false)});
 
 	// add event listener for pressing enter in the episode title input	
 	elemTitle.addEventListener("keyup", function(event) {
@@ -419,7 +439,7 @@ function importShow() {
 	reader.readAsText(elemFile.files[0]);
 }
 
-function updateShow() {
+function updateShow(wipeInputs = true) {
 	if(show.Seasons.length < 1) {
 		elemToc.style.display = "none";
 		return;
@@ -430,6 +450,7 @@ function updateShow() {
 	elemToc.style.display = "";
 	for(let s = 0; s < show.Seasons.length; s++) {
 		let seasonRating = 0;
+		let seasonMedianList = [];
 		let episodesRated = 0;
 		let p = document.createElement("p");
 	
@@ -500,10 +521,12 @@ function updateShow() {
 				console.log(`${episode}: ${average} / ${considered} = ${average / considered}`);
 				if(considered > 0) {
 					average = average / considered;
+          average = Math.round(average * 10)/10;
 					// average = Math.round(average*2)/2;
 					if(average > 5) { average = 5; }
 					
 					seasonRating += average;
+					seasonMedianList.push(average);
 					episodesRated++;
 					
 					average = rateString(average);
@@ -522,9 +545,13 @@ function updateShow() {
 			list.appendChild(index);
 		}
 		
-		seasonRating = seasonRating / episodesRated;
-		seasonRating = Math.round(seasonRating * 10)/10; // round to one decimal digit
-		p.innerHTML += rateString(seasonRating);
+		if(elemMedian.checked) {
+			p.innerHTML += rateString(median(seasonMedianList));
+		} else {
+			seasonRating = seasonRating / episodesRated;
+			seasonRating = Math.round(seasonRating * 10)/10; // round to one decimal digit
+			p.innerHTML += rateString(seasonRating);
+		}
 		h.after(p);
 	}
 	
@@ -564,6 +591,7 @@ function updateShow() {
 		return;
 	}
 	let episode = show.Seasons[s-1].Episodes[e-1];
+	if(!wipeInputs) { return; }
 	renew();
 	elemTitle.value = episode.Title;
 	elemDouble.checked = episode.double;
