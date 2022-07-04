@@ -24,6 +24,7 @@ function median(values) {
   if(values.length == 1) {
     return values[0];
   }
+  values.sort((x, y) => { return x-y; });
   let half = Math.floor(values.length / 2);
   if(half % 2 && half > 2) {
     return values[half];
