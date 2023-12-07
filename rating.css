@@ -1,3 +1,26 @@
+#ratings, #metadata {
+	width: fit-content;
+	display: inline-block;
+	vertical-align: top;
+	max-width: 50%;
+}
+
+#metadata {
+	font-family: monospace;
+}
+
+#metadata label {
+	display: inline-block;
+	margin: 0.5em;
+	font-size: small;
+}
+
+#metadata input {
+	display: block;
+	border: none;
+	border-bottom: 1px dashed black;
+}
+
 .rating span {
 	font-size: 25px;
 	font-weight: bold;
@@ -29,6 +52,12 @@
 	color: darkgray;
 }
 
+.min_rated {
+	color: red;
+}
+.max_rated {
+	color: green;
+}
 
 
 
@@ -55,6 +84,7 @@ h1, h1 input {
 	font-size: 25px;
 	font-family: sans, sans-serif;
 	font-weight: normal;
+	display: inline-block;
 }
 h1 input {
 	border: none;
@@ -83,6 +113,10 @@ button:active {
 
 
 
+.rating.average {
+	color: gold;
+}
+
 
 .seasonHeader {
 	cursor: pointer;
@@ -95,5 +129,58 @@ button:active {
 .seasonList li .sup {
 	vertical-align: super;
 	font-size: small;
-	color: gold;
+}
+
+#toc {
+	color: #ededed;
+	background: #444;
+	padding: 1em;
+	width: 40%;
+	margin-top: 2em;
+}
+
+.unrated {
+	color: gray;
+}
+
+
+
+/* CSS Grid */
+
+body {
+	display: grid;
+	grid-template-columns: 2fr 1fr;
+	grid-template-rows: auto auto auto;
+	grid-template-areas:
+		"header header"
+		"nav none"
+		"episode toc";
+	justify-items: stretch;
+	align-items: start;
+	grid-gap: 10px;
+}
+
+#HeaderBox {
+	grid-area: header;
+}
+
+#SelectorBox {
+	grid-area: nav;
+	height: fit-content;
+}
+
+#EpisodeBox {
+	grid-area: episode;
+}
+
+#toc {
+	grid-area: toc;
+	margin: 0;
+	width: auto;
+}
+
+#notes {
+	resize: vertical;
+	width: 100%;
+	box-sizing: border-box;
 }
