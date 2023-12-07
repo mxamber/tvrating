@@ -17,7 +17,7 @@ function $(query) {
 
 
 // calculate median average (as opposed to arithmetic average)
-function median(values) {
+function calculateMedian(values) {
   if(values.length == 0 || values.length == undefined) {
     return NaN;
   }
@@ -31,6 +31,103 @@ function median(values) {
   }
   return ((values[half] + values[half-1]) / 2);
 };
+
+function calculateAverage(values) {
+	return values.reduce((a, b) => { return a + b }) / values.length;
+}
+
+// calculate the standard deviation among a set of numbers. parameter: array of int or float
+function calculateDeviation(values, useMedian=true) {
+	values = values.slice(0); // THIS IS NECESSARY SINCE values IS TREATED AS A REFERENCE TO THE ORIGINAL ARRAY WHICH THE FUNCTION WILL THEN WORK ON, MESSING EVERYTHING UP FOR THE REST OF US!!! PROPER LANGUAGES WOULD USE (ref values) TO INDUCE THAT ON PURPOSE AND WORK ON A LOCAL COPY OTHERWISE, BUT JAVASCRIPT PREFERS TO DO UNANNOUNCED OPEN HEART SURGERY ON OTHER PEOPLE'S VARIABLES!!!!
+	if(useMedian) {
+		/*
+		* calculate median of all values, then replace each value in array with its deviation from median
+		* the median of all deviations is the median absolute deviation
+		*/
+		let baseline = calculateMedian(values);
+		values.forEach((element, index) => { values[index] = Math.abs(element - baseline) });
+		return calculateMedian(values);
+	} else {
+		let baseline = calculateAverage(values);
+		let population_standard_deviation = 0;
+		values.forEach(value => {
+			population_standard_deviation += Math.pow(value - baseline, 2);
+		});
+		population_standard_deviation = population_standard_deviation / values.length;
+		
+		return Math.sqrt(population_standard_deviation);
+	}
+	
+	// formula for calculating SD: https://www.scribbr.com/statistics/standard-deviation/
+	// formula for calculating MAD (median absolute deviation)
+}
+
+// determine interquartile range (look it up), another measure of variability
+function calculateIQR(values) {
+	// need at least 4 values to get quartiles
+	if(values.length < 4) { return NaN }
+	
+	// sort from low to high (duh)
+	values.sort();
+	
+	// slice array in halves; if odd number of entries, round up to exclude the middle
+	let upper_half = values.slice(Math.ceil(values.length / 2));
+	let lower_half = values.slice(0, Math.floor(values.length / 2));
+	
+	/*
+	* get the median of each half. an explanation is too much effort here, so just do the maths yourself.
+	* example:
+	*   lower half is 4 entries. length / 2 = 2
+	*   lower slice boundary: 2 - 1 = 1 (0-based index -> 2nd entry of 4)
+	*   upper slice boundary: 2.1 rounded up (.ceil) to 3 -> 4th entry -> slice stops before (exclusive index)
+	* result: entries 1 and 2 (2nd and 3rd entry) are returned
+	* example II:
+	*   lower half is 5 entries. length 2 / = 2.5
+	*   lower slice boundary: 2.5 rounded up to 3, -1 = 2 (3rd entry of 5, the middle)
+	*   upper slice boundary: 2.6 rounded up to 3, slice stops before 4th entry
+	* result: only the 3rd entry (the middle) is returned
+	*/
+	let lower_quartile = lower_half.slice(Math.ceil(lower_half.length / 2) - 1, Math.ceil(lower_half.length / 2 + 0.1));
+	let upper_quartile = upper_half.slice(Math.ceil(upper_half.length / 2) - 1, Math.ceil(upper_half.length / 2 + 0.1));
+	
+	lower_quartile = lower_quartile.length > 1 ? calculateAverage(lower_quartile) : lower_quartile[0];
+	upper_quartile = upper_quartile.length > 1 ? calculateAverage(upper_quartile) : upper_quartile[0];
+	return upper_quartile - lower_quartile;
+}
+
+/*
+* round to a specified precision. parameters: float, int or float
+* whole integers will be treated as desired amount of decimals
+* floats between 0 and 1 will be treated as rounding to that number
+* i.e. precision=0.5 will round to the nearest 0/0.5/1
+* floats above 1 will throw an error
+* precision = 0 will round the number directly to 0 decimals
+*/
+function roundPrecision(number, precision) {
+	// round to nearest 0..1 float. i.e. precision=0.25 -> round to 0, 0.25, 0.5, 0.75, 1
+	if(precision > 0 && precision < 1) {
+		// horrible call here: have to invoke function itself again to round to amount of decimals of precision specified, for reasons unknown rounding to nearest i.e. multiple of 0.13 returns a multiple of 0.12999999, etc etc
+		return roundPrecision(
+			Math.round(number * (1 / precision)) / (1 / precision),
+			precision.toString().split(".")[1].length
+		);
+	}
+	
+	if(precision % 1 > 0) {
+		throw new Error("Precision is not valid: must be 0, float 0..1, or integer >= 1!");
+	}
+	
+	if(precision >= 1) {
+		return Math.round(number * Math.pow(10, precision)) / Math.pow(10, precision); 
+	}
+	
+	if(precision == 0) {
+		return Math.round(number);
+	}
+	
+	// if nothing else has been caught, something has gone wrong
+	throw new Error(`Unknown error! Number=${number}, Precision=${precision}`);
+}
 
 
 // pad numbers with zeroes
@@ -57,6 +154,10 @@ var elemTitle = $("#title");
 var elemDouble =$("#double");
 var elemNotes = $("#notes");
 var elemRatings = $("#ratings");
+var elemDirector = $("#director");
+var elemStoryBy = $("#storyby");
+var elemScriptBy = $("#scriptby");
+var elemProtagonists = $("#protagonists");
 var elemSubmit = $("#submit");
 var elemDelete = $("#delete");
 var elemWeighted = $("#weighted");
@@ -201,6 +302,11 @@ function renew() {
 	elemDouble.checked = false;
 	elemNotes.value = "";
 	
+	elemDirector.value = "";
+	elemStoryBy.value = "";
+	elemScriptBy.value = "";
+	elemProtagonists.value = "";
+	
 	elemRatings.innerHTML = "";
 	
 	elemRatings.appendChild(rateButton(
@@ -289,6 +395,38 @@ function submitEpisode() {
 	let double = elemDouble.checked;
 	let notes = elemNotes.value;
 	
+	let director = elemDirector.value;
+	let storyby = elemStoryBy.value;
+	let scriptby = elemScriptBy.value;
+	let protagonists = elemProtagonists.value;
+	
+	if(storyby == null || storyby.length < 1) {
+		storyby = [];
+	} else if(storyby.indexOf(",") < 0) {
+		storyby = [storyby];
+	} else {
+		storyby = storyby.split(",");
+		storyby.forEach((writer, index) => { storyby[index] = writer.trim(); });
+	}
+	
+	if(scriptby == null || scriptby.length < 1) {
+		scriptby = [];
+	} else if(scriptby.indexOf(",") < 0) {
+		scriptby = [scriptby];
+	} else {
+		scriptby = scriptby.split(",");
+		scriptby.forEach((writer, index) => { scriptby[index] = writer.trim(); });
+	}
+	
+	if(protagonists == null || protagonists.length < 1) {
+		protagonists = [];
+	} else if(protagonists.indexOf(",") < 0) {
+		protagonists = [protagonists];
+	} else {
+		protagonists = protagonists.split(",");
+		protagonists.forEach((protagonist, index) => { protagonists[index] = protagonist.trim(); });
+	}
+	
 	let episode = new Episode(title, season, number, double);
 	episode.Plausible = parseInt($("#rate_plausible").getAttribute("data-rating"));
 	episode.Emotional = parseInt($("#rate_emotional").getAttribute("data-rating"));
@@ -296,6 +434,11 @@ function submitEpisode() {
 	episode.Continuity = parseInt($("#rate_continuity").getAttribute("data-rating"));
 	episode.Characters = parseInt($("#rate_characters").getAttribute("data-rating"));
 	episode.Notes = notes;
+	
+	episode.Director = director;
+	episode.StoryBy = storyby;
+	episode.ScriptBy = scriptby;
+	episode.Protagonists = protagonists;
 	
 	// season doesn't exist yet? create new
 	if(!show.Seasons[season-1]) {
@@ -407,18 +550,18 @@ function importShow() {
 			}
 			if(tempObj.Seasons[s].Episodes) {
 				show.Seasons[s] = new Season();
-				console.log("Created new season: Season " + (s+1));
+				/*console.log("Created new season: Season " + (s+1));*/
 				show.Seasons[s].Episodes = [];
 				for(let e = 0; e < tempObj.Seasons[s].Episodes.length; e++) {
 					if(tempObj.Seasons[s].Episodes[e] == null) {
 						show.Seasons[s].Episodes[e] = null;
-						console.log((e+1) + ": Empty episode");
+						/*console.log((e+1) + ": Empty episode");*/
 						continue;
 					}
 					let tempEp = tempObj.Seasons[s].Episodes[e];
 					if(tempEp == "PLACEHOLDER") {
 						show.Seasons[s].Episodes[e] = "PLACEHOLDER";
-						console.log((e+1) + ": Placeholder for previous episode (episode " + e + ")");
+						/*console.log((e+1) + ": Placeholder for previous episode (episode " + e + ")");*/
 					} else if (isEpisode(tempEp)) {
 						let episode = new Episode(tempEp.Title, tempEp.season, tempEp.number, tempEp.double);
 						episode.Plausible = tempEp.Plausible;
@@ -427,8 +570,15 @@ function importShow() {
 						episode.Continuity = tempEp.Continuity;
 						episode.Characters = tempEp.Characters;
 						episode.Notes = tempEp.Notes;
+						
+						/* since thesewere added later, I have to check loaded episodes and possibly use empty defaults instead*/
+						episode.Director = tempEp.Director ? tempEp.Director : "";
+						episode.StoryBy = tempEp.StoryBy ? tempEp.StoryBy : [];
+						episode.ScriptBy = tempEp.ScriptBy ? tempEp.ScriptBy : [];
+						episode.Protagonists = tempEp.Protagonists ? tempEp.Protagonists : [];
+						
 						show.Seasons[s].Episodes[e] = episode;
-						console.log((e+1) + ": Episode found: " + episode.Title);
+						/*console.log((e+1) + ": Episode found: " + episode.Title);*/
 					}
 					
 				}
@@ -451,7 +601,7 @@ function updateShow(wipeInputs = true) {
 	elemToc.style.display = "";
 	for(let s = 0; s < show.Seasons.length; s++) {
 		let seasonRating = 0;
-		let seasonMedianList = [];
+		let seasonEpisodeRatingsList = [];
 		let episodesRated = 0;
 		let p = document.createElement("p");
 	
@@ -519,16 +669,17 @@ function updateShow(wipeInputs = true) {
 				if(episode.Original > 0) { average += episode.Original; considered++; }
 				if(episode.Continuity > 0) { average += episode.Continuity; considered++; }
 				if(episode.Characters > 0) { average += episode.Characters; considered++; }
-				console.log(`${episode}: ${average} / ${considered} = ${average / considered}`);
+				/*console.log(`${episode}: ${average} / ${considered} = ${average / considered}`);*/
 				if(considered > 0) {
 					average = average / considered;
-          average = Math.round(average * 10)/10;
-					// average = Math.round(average*2)/2;
+          average = roundPrecision(average, 1);
+					// average = roundPrecision(average, 0.5);
 					if(average > 5) { average = 5; }
 					
 					seasonRating += average;
-					seasonMedianList.push(average);
+					seasonEpisodeRatingsList.push(average);
 					episodesRated++;
+					
 					
 					average = rateString(average);
 				} else {
@@ -542,17 +693,34 @@ function updateShow(wipeInputs = true) {
 				}
 				index.innerHTML = `${numberstr}: ${episode.Title} ${average}`;
 				index.title = `Edit episode ${s+1}x${numberstr} ${episode.Title}`;
+				index.classList.add(considered == 0 ? "unrated" : "rated");
 			}
 			list.appendChild(index);
 		}
 		
+		let min_rated = seasonEpisodeRatingsList.sort()[0];
+		let max_rated = seasonEpisodeRatingsList[seasonEpisodeRatingsList.length - 1];
+		let minmax_str1 = `<small class="min_rated">${min_rated} \u2190&nbsp;</small>`;
+		let minmax_str2 = `&nbsp;<small class="max_rated">\u2192 ${max_rated}</small><br/>`;
+		
 		if(elemMedian.checked) {
-			p.innerHTML += rateString(median(seasonMedianList));
+			p.innerHTML += minmax_str1;
+			p.innerHTML += rateString(calculateMedian(seasonEpisodeRatingsList));			
+			p.innerHTML += minmax_str2;
+			
+			p.innerHTML += `<small><abbr title="Median Absolute Deviation">MAD</abbr>: ${roundPrecision(calculateDeviation(seasonEpisodeRatingsList, true), 1)}</small>`;
 		} else {
-			seasonRating = seasonRating / episodesRated;
-			seasonRating = Math.round(seasonRating * 10)/10; // round to one decimal digit
-			p.innerHTML += rateString(seasonRating);
+			p.innerHTML += minmax_str1;
+			p.innerHTML += rateString(roundPrecision(seasonRating / episodesRated, 1)); // round to one decimal digit
+			p.innerHTML += minmax_str2;
+			
+			p.innerHTML += `&nbsp;<small><abbr title="Standard Deviation">SD</abbr>: ${roundPrecision(calculateDeviation(seasonEpisodeRatingsList, false), 1)}</small>`;
 		}
+		
+		p.innerHTML += `, <small><abbr title="Interquartile Range">IQR</abbr>: ${roundPrecision(calculateIQR(seasonEpisodeRatingsList), 1)}</small>`;
+		
+		/*console.error(`Season ${s+1}, ratings: ${seasonEpisodeRatingsList.join(", ")}`);*/
+		
 		h.after(p);
 	}
 	
@@ -597,6 +765,12 @@ function updateShow(wipeInputs = true) {
 	elemTitle.value = episode.Title;
 	elemDouble.checked = episode.double;
 	elemNotes.value = episode.Notes;
+	
+	elemDirector.value = episode.Director;
+	elemStoryBy.value = episode.StoryBy.join(", ");
+	elemScriptBy.value = episode.ScriptBy.join(", ");
+	elemProtagonists.value = episode.Protagonists.join(", ");
+	
 	$("#rate_plausible").setAttribute("data-rating", episode.Plausible);
 	$("#rate_emotional").setAttribute("data-rating", episode.Emotional);
 	$("#rate_original").setAttribute("data-rating", episode.Original);
