@@ -7,43 +7,58 @@
 	<link rel="stylesheet" href="rating.css">
 </head>
 <body onload="init()">
-	<h1>Episode Ratings: <input id="showname" type="text" placeholder="Show Name Here" title="Show Name"></input> (<input id="short" type="text" placeholder="SHORT" title="Show abbreviation"></input>)</h1>
+	<header id="HeaderBox">
+		<h1>Episode Ratings: <input id="showname" type="text" placeholder="Show Name Here" title="Show Name"></input> (<input id="short" type="text" placeholder="SHORT" title="Show abbreviation"></input>)</h1>
+		
+		<button id="download">Save</button>
+		<button id="load">Load</button>
+		<input id="file" type="file" accept=".json,application/json" style="display: none;"></input>
+	</header>
 	
-	<button id="download">Save</button>
-	<button id="load">Load</button>
-	<input id="file" type="file" accept=".json,application/json" style="display: none;"></input>
-	
-	<p>Episode:&ensp;
-	<input id="season" type="number" min=1 value=1 title="Season"></input>&ensp;x&ensp;
-	<input id="episode" type="number" min=1 value=1 title="Episode"></input>&emsp;
-	<input id="title" type="text" placeholder="Title" title="Title"></input>&nbsp;
-	<input id="double" type="checkbox" value=false title="Double episode?"><label for="double"> Double episode</label></input>
-	</p>
-	
-	<textarea id="notes" cols=90 rows=15 style="display:block" placeholder="Notes..." title="Notes"></textarea>
-	
-	<p id="ratings"></p>
-	
-	<button id="submit">Submit</button> <button id="delete">Delete</button>
-	
-	<p>
-	<input id="weighted" type="checkbox"><label for="weighted">Weight emotionality double</label></input>
-	<br/>
-	<input id="median" type="checkbox"><label for="median">Use median instead of average</label></input>
-	</p>
-	
+	<nav id="SelectorBox">
+		<p>Episode:&ensp;
+		<input id="season" type="number" min=1 value=1 title="Season"></input>&ensp;x&ensp;
+		<input id="episode" type="number" min=1 value=1 title="Episode"></input>&emsp;
+		<input id="title" type="text" placeholder="Title" title="Title"></input>&nbsp;
+		<input id="double" type="checkbox" value=false title="Double episode?"><label for="double"> Double episode</label></input>
+		</p>
+		
+		<p>
+			<input id="weighted" type="checkbox" checked><label for="weighted">Weight Emotionality double <small>(hated or loved episodes will be saved/doomed less by good technical ratings)</small></label></input>
+			<br/>
+			<input id="median" type="checkbox" checked><label for="median">Calculate median rating instead of average <small>(single outlier episodes distort the season score less)</small></label></input>
+		</p>
+	</nav>
+		
+	<section id="EpisodeBox">
+		<textarea id="notes" cols=90 rows=15 style="display:block" placeholder="Notes..." title="Notes"></textarea>
+		
+		<p id="ratings"></p>
+		
+		<p id="metadata">
+			<label for="director">Director: <input name="director" id="director" placeholder="Director"></input></label>
+			<label for="storyby">Story by: <input name="storyby" id="storyby" placeholder="Joe Public"></input></label>
+			<label for="scriptby">Script by: <input name="scriptby" id="scriptby" placeholder="Jane Doe, John Smith, ..."></input></label>
+			<label for="protagonists">Protagonist(s): <input name="protagonists" id="protagonists" placeholder="Kirk, Picard, ..."></input></label>
+		</p>
+		
+		<hr/>
+		
+		<button id="submit">Submit</button> <button id="delete">Delete</button>
+	</section>
+		
 	<nav id="toc"></nav>
-	
-	<script src="rating.js"></script>
-	
-	<!--
-	<span class="rating" data-rating="0">
-		<span onclick="this.parentNode.setAttribute('data-rating', 1);">&#9733;</span>
-		<span onclick="this.parentNode.setAttribute('data-rating', 2);">&#9733;</span>
-		<span onclick="this.parentNode.setAttribute('data-rating', 3);">&#9733;</span>
-		<span onclick="this.parentNode.setAttribute('data-rating', 4);">&#9733;</span>
-		<span onclick="this.parentNode.setAttribute('data-rating', 5);">&#9733;</span>
-	</span>
-	-->
+		
+		<script src="rating.js"></script>
+		
+		<!--
+		<span class="rating" data-rating="0">
+			<span onclick="this.parentNode.setAttribute('data-rating', 1);">&#9733;</span>
+			<span onclick="this.parentNode.setAttribute('data-rating', 2);">&#9733;</span>
+			<span onclick="this.parentNode.setAttribute('data-rating', 3);">&#9733;</span>
+			<span onclick="this.parentNode.setAttribute('data-rating', 4);">&#9733;</span>
+			<span onclick="this.parentNode.setAttribute('data-rating', 5);">&#9733;</span>
+		</span>
+		-->
 </body>
 </html>
